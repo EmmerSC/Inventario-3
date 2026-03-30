@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#6A1B9A">
+<title>Tienda de Ropa</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--lila:#6A1B9A;--lila-med:#9C27B0;--lila-clar:#F3E5F5;--verde:#2E7D32;--rojo:#C62828;--amarillo:#F9A825;--bg:#F8F4FB;--card:#fff;--text:#1a1a2e;--text2:#6B5B7A;--border:#E0D5EA;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:80px}
+.topbar{background:var(--lila);padding:16px 20px 12px;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between}
+.topbar h1{font-family:'Playfair Display',serif;color:#fff;font-size:20px;font-weight:600}
+.sync-dot{width:10px;height:10px;border-radius:50%;background:#4CAF50;border:2px solid rgba(255,255,255,0.5)}
+.sync-dot.offline{background:#FF9800}
+.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{flex:1;padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;color:var(--text2);font-size:10px;font-family:'DM Sans',sans-serif;transition:color .2s}
+.nav-btn.active{color:var(--lila)}
+.nav-btn svg{width:22px;height:22px;stroke-width:1.8}
+.nav-btn .nav-dot{width:5px;height:5px;border-radius:50%;background:var(--lila);opacity:0;transition:opacity .2s}
+.nav-btn.active .nav-dot{opacity:1}
+.page{display:none;padding:16px}.page.active{display:block}
+.card{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:16px;margin-bottom:12px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-size:15px;font-weight:600;color:var(--text)}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500}
+.badge-ok{background:#E8F5E9;color:#2E7D32}.badge-warn{background:#FFF8E1;color:#F57F17}.badge-err{background:#FFEBEE;color:#C62828}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stat-card{background:var(--card);border-radius:14px;border:1px solid var(--border);padding:14px}
+.stat-label{font-size:11px;color:var(--text2);margin-bottom:4px}
+.stat-val{font-size:22px;font-weight:600;color:var(--lila)}.stat-val.green{color:var(--verde)}.stat-val.red{color:var(--rojo)}
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px;display:block}
+.form-input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;background:#fff;color:var(--text);outline:none;transition:border .2s}
+.form-input:focus{border-color:var(--lila)}
+select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236A1B9A' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{width:100%;padding:13px;border-radius:12px;border:none;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--lila);color:#fff}.btn-primary:active{transform:scale(0.98)}
+.btn-secondary{background:var(--lila-clar);color:var(--lila)}
+.btn-danger{background:#FFEBEE;color:var(--rojo);margin-top:8px}
+.item-card{background:var(--card);border-radius:14px;border:1px solid var(--border);padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px}
+.item-color-dot{width:36px;height:36px;border-radius:10px;flex-shrink:0}
+.item-info{flex:1;min-width:0}
+.item-name{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.item-stock{text-align:right;flex-shrink:0}
+.item-stock-num{font-size:18px;font-weight:600;color:var(--lila)}
+.item-stock-label{font-size:10px;color:var(--text2)}
+.search-bar{position:relative;margin-bottom:14px}
+.search-bar input{width:100%;padding:11px 14px 11px 40px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-family:'DM Sans',sans-serif;background:#fff;color:var(--text);outline:none}
+.search-bar input:focus{border-color:var(--lila)}
+.search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text2)}
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end}
+.modal-backdrop.open{display:flex}
+.modal-sheet{background:#fff;border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:90vh;overflow-y:auto;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 16px}
+.modal-title{font-size:17px;font-weight:600;margin-bottom:16px;color:var(--text)}
+.venta-card{background:var(--card);border-radius:14px;border:1px solid var(--border);padding:14px;margin-bottom:10px}
+.venta-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.venta-modelo{font-size:14px;font-weight:600}
+.venta-total{font-size:16px;font-weight:600;color:var(--verde)}
+.venta-sub{font-size:12px;color:var(--text2)}
+.fab{position:fixed;bottom:76px;right:20px;width:52px;height:52px;border-radius:50%;background:var(--lila);border:none;color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(106,27,154,0.4);z-index:90;transition:transform .2s}
+.fab:active{transform:scale(0.93)}
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);background:#333;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;opacity:0;transition:all .3s;z-index:300;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty{text-align:center;padding:40px 20px;color:var(--text2)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.empty p{font-size:14px}
+.section-title{font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.color-tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500;background:var(--lila-clar);color:var(--lila);margin-right:4px}
+.connection-banner{background:#FF9800;color:#fff;text-align:center;font-size:12px;padding:6px;display:none}
+.connection-banner.show{display:block}
+.mes-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:none}
+.mes-tabs::-webkit-scrollbar{display:none}
+.mes-tab{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;border:1.5px solid var(--border);background:#fff;color:var(--text2);cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:'DM Sans',sans-serif}
+.mes-tab.active{background:var(--lila);color:#fff;border-color:var(--lila)}
+.confirm-modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;align-items:center;justify-content:center}
+.confirm-modal-backdrop.open{display:flex}
+.confirm-modal{background:#fff;border-radius:20px;padding:24px;width:calc(100% - 48px);max-width:320px;text-align:center}
+.confirm-icon{font-size:40px;margin-bottom:12px}
+.confirm-title{font-size:17px;font-weight:600;margin-bottom:8px;color:var(--text)}
+.confirm-desc{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.5}
+.confirm-btns{display:flex;flex-direction:column;gap:8px}
+.venta-delete{background:none;border:none;color:var(--rojo);font-size:14px;padding:4px 6px;cursor:pointer;border-radius:8px}
+.danger-zone{background:#FFF5F5;border:1.5px solid #FFCDD2;border-radius:14px;padding:16px;margin-bottom:12px}
+.danger-title{font-size:13px;font-weight:600;color:var(--rojo);margin-bottom:4px}
+.danger-desc{font-size:12px;color:#B71C1C;margin-bottom:12px;line-height:1.5}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>👗 Mi Tienda</h1>
+  <div class="sync-dot" id="syncDot"></div>
+</div>
+<div class="connection-banner" id="offlineBanner">Sin conexión — cambios guardados localmente</div>
+<div class="toast" id="toast"></div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="showPage('resumen')" id="nav-resumen">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Resumen<div class="nav-dot"></div>
+  </button>
+  <button class="nav-btn" onclick="showPage('inventario')" id="nav-inventario">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/></svg>
+    Inventario<div class="nav-dot"></div>
+  </button>
+  <button class="nav-btn" onclick="showPage('ventas')" id="nav-ventas">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 5h14M9 21a1 1 0 100-2 1 1 0 000 2zm10 0a1 1 0 100-2 1 1 0 000 2z"/></svg>
+    Ventas<div class="nav-dot"></div>
+  </button>
+  <button class="nav-btn" onclick="showPage('configuracion')" id="nav-configuracion">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    Config<div class="nav-dot"></div>
+  </button>
+</nav>
+
+<!-- PAGE: RESUMEN -->
+<div class="page active" id="page-resumen">
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">Total en stock</div><div class="stat-val" id="stat-stock">0</div></div>
+    <div class="stat-card"><div class="stat-label">Total vendido (S/)</div><div class="stat-val green" id="stat-vendido">0.00</div></div>
+    <div class="stat-card"><div class="stat-label">Ganancia total (S/)</div><div class="stat-val green" id="stat-ganancia">0.00</div></div>
+    <div class="stat-card"><div class="stat-label">Modelos agotados</div><div class="stat-val red" id="stat-agotados">0</div></div>
+  </div>
+  <div class="section-title">Estadísticas por mes</div>
+  <div class="mes-tabs" id="mes-tabs"></div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">Ventas del mes (S/)</div><div class="stat-val green" id="mes-vendido">0.00</div></div>
+    <div class="stat-card"><div class="stat-label">Ganancia del mes (S/)</div><div class="stat-val green" id="mes-ganancia">0.00</div></div>
+    <div class="stat-card"><div class="stat-label">Unidades vendidas</div><div class="stat-val" id="mes-unidades">0</div></div>
+    <div class="stat-card"><div class="stat-label">Ticket promedio (S/)</div><div class="stat-val" id="mes-ticket">0.00</div></div>
+  </div>
+  <div class="section-title">Alertas de stock</div>
+  <div id="alertas-list"></div>
+</div>
+
+<!-- PAGE: INVENTARIO -->
+<div class="page" id="page-inventario">
+  <div class="search-bar">
+    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input type="text" placeholder="Buscar modelo..." id="search-inventario" oninput="renderInventario()">
+  </div>
+  <div id="inventario-list"></div>
+</div>
+
+<!-- PAGE: VENTAS -->
+<div class="page" id="page-ventas">
+  <div class="search-bar">
+    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input type="text" placeholder="Buscar venta..." id="search-ventas" oninput="renderVentas()">
+  </div>
+  <div id="ventas-list"></div>
+</div>
+
+<!-- PAGE: CONFIGURACION -->
+<div class="page" id="page-configuracion">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Colores disponibles</div></div>
+    <div id="colores-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"></div>
+    <div style="display:flex;gap:8px">
+      <input class="form-input" id="nuevo-color" placeholder="Ej: Fucsia" style="flex:1">
+      <button class="btn btn-secondary" style="width:auto;padding:11px 16px" onclick="agregarColor()">+ Agregar</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Tallas disponibles</div></div>
+    <div id="tallas-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"></div>
+    <div style="display:flex;gap:8px">
+      <input class="form-input" id="nueva-talla" placeholder="Ej: 50" style="flex:1">
+      <button class="btn btn-secondary" style="width:auto;padding:11px 16px" onclick="agregarTalla()">+ Agregar</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Conexión</div></div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:10px" id="firebase-status">Verificando...</p>
+    <button class="btn btn-secondary" onclick="sincronizar()">Sincronizar ahora</button>
+  </div>
+  <div class="danger-zone">
+    <div class="danger-title">⚠️ Zona de peligro</div>
+    <div class="danger-desc">Estas acciones son irreversibles. Los datos eliminados no se pueden recuperar.</div>
+    <button class="btn" style="background:#FFEBEE;color:var(--rojo);margin-bottom:8px" onclick="confirmarReset('ventas')">🗑️ Borrar todas las ventas</button>
+    <button class="btn" style="background:#FFEBEE;color:var(--rojo);margin-bottom:8px" onclick="confirmarReset('inventario')">🗑️ Borrar todo el inventario</button>
+    <button class="btn" style="background:var(--rojo);color:#fff" onclick="confirmarReset('todo')">💣 Resetear todo</button>
+  </div>
+</div>
+
+<button class="fab" id="fab-btn" onclick="abrirModal()">+</button>
+
+<!-- MODAL PRENDA -->
+<div class="modal-backdrop" id="modal-prenda">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-prenda-title">Nueva prenda</div>
+    <input type="hidden" id="edit-id">
+    <div class="form-group"><label class="form-label">Modelo / Prenda *</label><input class="form-input" id="inp-modelo" placeholder="Ej: Vestido Floral"></div>
+    <div class="form-group"><label class="form-label">Descripción</label><input class="form-input" id="inp-descripcion" placeholder="Ej: Manga corta, estampado flores"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Color *</label><select class="form-input" id="inp-color"></select></div>
+      <div class="form-group"><label class="form-label">Talla *</label><select class="form-input" id="inp-talla"></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Precio costo (S/) *</label><input class="form-input" id="inp-costo" type="number" placeholder="0.00"></div>
+      <div class="form-group"><label class="form-label">Precio venta (S/) *</label><input class="form-input" id="inp-venta" type="number" placeholder="0.00"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Stock inicial *</label><input class="form-input" id="inp-stock" type="number" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">Vendido</label><input class="form-input" id="inp-vendido" type="number" placeholder="0"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Observaciones</label><input class="form-input" id="inp-obs" placeholder="Notas opcionales"></div>
+    <button class="btn btn-primary" onclick="guardarPrenda()">Guardar prenda</button>
+    <button class="btn btn-danger" onclick="cerrarModal('modal-prenda')">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL VENTA -->
+<div class="modal-backdrop" id="modal-venta">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Registrar venta</div>
+    <div class="form-group"><label class="form-label">Prenda *</label><select class="form-input" id="venta-prenda" onchange="rellenarVenta()"></select></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Cantidad *</label><input class="form-input" id="venta-cantidad" type="number" value="1" min="1"></div>
+      <div class="form-group"><label class="form-label">Precio unit. (S/)</label><input class="form-input" id="venta-precio" type="number" placeholder="0.00"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Cliente (opcional)</label><input class="form-input" id="venta-cliente" placeholder="Nombre del cliente"></div>
+    <div id="venta-resumen" style="background:var(--lila-clar);border-radius:10px;padding:12px;margin-bottom:14px;display:none">
+      <div style="font-size:12px;color:var(--text2)">Total de la venta</div>
+      <div style="font-size:20px;font-weight:600;color:var(--lila)" id="venta-total-preview">S/ 0.00</div>
+    </div>
+    <button class="btn btn-primary" onclick="guardarVenta()">Registrar venta</button>
+    <button class="btn btn-danger" onclick="cerrarModal('modal-venta')">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL DETALLE -->
+<div class="modal-backdrop" id="modal-detalle">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div id="detalle-content"></div>
+    <button class="btn btn-danger" onclick="cerrarModal('modal-detalle')">Cerrar</button>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="confirm-modal-backdrop" id="confirm-modal">
+  <div class="confirm-modal">
+    <div class="confirm-icon" id="confirm-icon">⚠️</div>
+    <div class="confirm-title" id="confirm-title">¿Estás segura?</div>
+    <div class="confirm-desc" id="confirm-desc">Esta acción no se puede deshacer.</div>
+    <div class="confirm-btns">
+      <button class="btn" style="background:var(--rojo);color:#fff" id="confirm-ok-btn">Confirmar</button>
+      <button class="btn btn-secondary" onclick="cerrarConfirm()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, writeBatch, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const app = initializeApp({apiKey:"AIzaSyBcmxYq5JNwAVgVhQ87Xn8DRFzMmw_RWZ0",authDomain:"tienda-de-ropa-4f91e.firebaseapp.com",projectId:"tienda-de-ropa-4f91e",storageBucket:"tienda-de-ropa-4f91e.firebasestorage.app",messagingSenderId:"5950288858",appId:"1:5950288858:web:9ae62af7f02c1f574206e3"});
+const db = getFirestore(app);
+enableIndexedDbPersistence(db).catch(()=>{});
+
+window.DB = {prendas:{},ventas:{},config:{colores:['Negro','Blanco','Rojo','Azul','Verde','Rosa','Beige','Gris','Amarillo','Naranja','Violeta','Celeste','Marron','Multicolor'],tallas:['38','40','42','44','46','48']}};
+const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+let mesSel=new Date().getMonth(), anioSel=new Date().getFullYear();
+
+window.showToast=function(msg,dur=2500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+
+window.showPage=function(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.getElementById('nav-'+page).classList.add('active');
+  const fab=document.getElementById('fab-btn');
+  if(page==='inventario'){fab.style.display='flex';fab.onclick=()=>abrirModal();}
+  else if(page==='ventas'){fab.style.display='flex';fab.onclick=()=>abrirModalVenta();}
+  else{fab.style.display='none';}
+  if(page==='resumen'){renderResumen();renderMesTabs();}
+  if(page==='inventario')renderInventario();
+  if(page==='ventas')renderVentas();
+  if(page==='configuracion')renderConfig();
+}
+
+window.renderMesTabs=function(){
+  const meses=new Set();
+  Object.values(window.DB.ventas).forEach(v=>{if(v.timestamp){const d=new Date(v.timestamp);meses.add(d.getFullYear()+'-'+d.getMonth());}});
+  const now=new Date(); meses.add(now.getFullYear()+'-'+now.getMonth());
+  const tabs=Array.from(meses).sort().reverse();
+  document.getElementById('mes-tabs').innerHTML=tabs.map(k=>{
+    const[a,m]=k.split('-').map(Number);
+    const lbl=MESES[m]+(a!==now.getFullYear()?' '+a:'');
+    return `<button class="mes-tab ${m===mesSel&&a===anioSel?'active':''}" onclick="seleccionarMes(${m},${a})">${lbl}</button>`;
+  }).join('');
+  renderStatsMes();
+}
+
+window.seleccionarMes=function(m,a){mesSel=m;anioSel=a;renderMesTabs();}
+
+window.renderStatsMes=function(){
+  const v=Object.values(window.DB.ventas).filter(v=>v.timestamp&&new Date(v.timestamp).getMonth()===mesSel&&new Date(v.timestamp).getFullYear()===anioSel);
+  document.getElementById('mes-vendido').textContent='S/ '+v.reduce((a,x)=>a+(x.total||0),0).toFixed(2);
+  document.getElementById('mes-ganancia').textContent='S/ '+v.reduce((a,x)=>a+(x.ganancia||0),0).toFixed(2);
+  document.getElementById('mes-unidades').textContent=v.reduce((a,x)=>a+(x.cantidad||0),0);
+  const total=v.reduce((a,x)=>a+(x.total||0),0);
+  document.getElementById('mes-ticket').textContent='S/ '+(v.length?total/v.length:0).toFixed(2);
+}
+
+window.abrirModal=function(id=null){
+  ['edit-id','inp-modelo','inp-descripcion','inp-costo','inp-venta','inp-stock','inp-vendido','inp-obs'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('modal-prenda-title').textContent=id?'Editar prenda':'Nueva prenda';
+  document.getElementById('inp-color').innerHTML=window.DB.config.colores.map(c=>`<option>${c}</option>`).join('');
+  document.getElementById('inp-talla').innerHTML=window.DB.config.tallas.map(t=>`<option>${t}</option>`).join('');
+  if(id){const p=window.DB.prendas[id];document.getElementById('edit-id').value=id;document.getElementById('inp-modelo').value=p.modelo||'';document.getElementById('inp-descripcion').value=p.descripcion||'';document.getElementById('inp-costo').value=p.costo||'';document.getElementById('inp-venta').value=p.precioVenta||'';document.getElementById('inp-stock').value=p.stockInicial||'';document.getElementById('inp-vendido').value=p.vendido||'';document.getElementById('inp-obs').value=p.obs||'';document.getElementById('inp-color').value=p.color||'';document.getElementById('inp-talla').value=p.talla||'';}
+  document.getElementById('modal-prenda').classList.add('open');
+}
+
+window.abrirModalVenta=function(){
+  const sel=document.getElementById('venta-prenda');
+  sel.innerHTML='<option value="">Seleccionar prenda...</option>';
+  Object.entries(window.DB.prendas).forEach(([id,p])=>{const s=(p.stockInicial||0)-(p.vendido||0);if(s>0)sel.innerHTML+=`<option value="${id}">${p.modelo} — ${p.color} T${p.talla} (Stock: ${s})</option>`;});
+  document.getElementById('venta-cantidad').value=1;document.getElementById('venta-precio').value='';document.getElementById('venta-cliente').value='';document.getElementById('venta-resumen').style.display='none';
+  document.getElementById('modal-venta').classList.add('open');
+}
+
+window.cerrarModal=function(id){document.getElementById(id).classList.remove('open');}
+
+window.rellenarVenta=function(){const id=document.getElementById('venta-prenda').value;if(!id)return;document.getElementById('venta-precio').value=window.DB.prendas[id].precioVenta||'';actualizarTotalVenta();document.getElementById('venta-resumen').style.display='block';}
+window.actualizarTotalVenta=function(){const c=parseFloat(document.getElementById('venta-cantidad').value)||0,p=parseFloat(document.getElementById('venta-precio').value)||0;document.getElementById('venta-total-preview').textContent='S/ '+(c*p).toFixed(2);}
+document.getElementById('venta-cantidad').addEventListener('input',window.actualizarTotalVenta);
+document.getElementById('venta-precio').addEventListener('input',window.actualizarTotalVenta);
+
+let confirmCb=null;
+window.confirmarReset=function(tipo){
+  const cfg={ventas:{icon:'🗑️',title:'¿Borrar todas las ventas?',desc:'Se eliminarán todas las ventas. El stock del inventario NO cambiará.',btn:'Sí, borrar ventas'},inventario:{icon:'📦',title:'¿Borrar todo el inventario?',desc:'Se eliminarán todas las prendas. Las ventas NO se modificarán.',btn:'Sí, borrar inventario'},todo:{icon:'💣',title:'¿Resetear TODO?',desc:'Se borrarán TODAS las prendas y TODAS las ventas. La app quedará vacía. Acción IRREVERSIBLE.',btn:'Sí, resetear todo'}};
+  const c=cfg[tipo];
+  document.getElementById('confirm-icon').textContent=c.icon;document.getElementById('confirm-title').textContent=c.title;document.getElementById('confirm-desc').textContent=c.desc;document.getElementById('confirm-ok-btn').textContent=c.btn;
+  confirmCb=()=>ejecutarReset(tipo);
+  document.getElementById('confirm-modal').classList.add('open');
+}
+document.getElementById('confirm-ok-btn').addEventListener('click',()=>{if(confirmCb)confirmCb();cerrarConfirm();});
+window.cerrarConfirm=function(){document.getElementById('confirm-modal').classList.remove('open');confirmCb=null;}
+
+window.ejecutarReset=async function(tipo){
+  const batch=writeBatch(db);
+  if(tipo==='ventas'||tipo==='todo'){Object.keys(window.DB.ventas).forEach(id=>batch.delete(doc(db,'ventas',id)));window.DB.ventas={};}
+  if(tipo==='inventario'||tipo==='todo'){Object.keys(window.DB.prendas).forEach(id=>batch.delete(doc(db,'prendas',id)));window.DB.prendas={};}
+  try{await batch.commit();}catch(e){}
+  renderResumen();renderInventario();renderVentas();renderMesTabs();
+  showToast('✅ Datos eliminados');
+}
+
+window.guardarPrenda=async function(){
+  const modelo=document.getElementById('inp-modelo').value.trim();
+  if(!modelo){showToast('⚠️ Ingresá el nombre del modelo');return;}
+  const editId=document.getElementById('edit-id').value;
+  const id=editId||Date.now().toString();
+  const prenda={modelo,color:document.getElementById('inp-color').value,talla:document.getElementById('inp-talla').value,costo:parseFloat(document.getElementById('inp-costo').value)||0,precioVenta:parseFloat(document.getElementById('inp-venta').value)||0,stockInicial:parseInt(document.getElementById('inp-stock').value)||0,vendido:parseInt(document.getElementById('inp-vendido').value)||0,descripcion:document.getElementById('inp-descripcion').value.trim(),obs:document.getElementById('inp-obs').value.trim(),updatedAt:Date.now()};
+  window.DB.prendas[id]=prenda;
+  cerrarModal('modal-prenda');renderInventario();renderResumen();
+  showToast(editId?'✅ Prenda actualizada':'✅ Prenda agregada');
+  try{await setDoc(doc(db,'prendas',id),prenda);}catch(e){}
+}
+
+window.guardarVenta=async function(){
+  const prendaId=document.getElementById('venta-prenda').value;
+  const cantidad=parseInt(document.getElementById('venta-cantidad').value)||0;
+  const precio=parseFloat(document.getElementById('venta-precio').value)||0;
+  if(!prendaId||cantidad<=0){showToast('⚠️ Completá los campos');return;}
+  const p=window.DB.prendas[prendaId];
+  if(cantidad>(p.stockInicial||0)-(p.vendido||0)){showToast('⚠️ No hay suficiente stock');return;}
+  const id=Date.now().toString();
+  const venta={prendaId,modelo:p.modelo,color:p.color,talla:p.talla,cantidad,precio,total:cantidad*precio,costo:(p.costo||0)*cantidad,ganancia:(precio-(p.costo||0))*cantidad,cliente:document.getElementById('venta-cliente').value.trim(),fecha:new Date().toLocaleDateString('es-PE'),timestamp:Date.now()};
+  window.DB.ventas[id]=venta;
+  window.DB.prendas[prendaId].vendido=(p.vendido||0)+cantidad;
+  cerrarModal('modal-venta');renderVentas();renderResumen();renderInventario();renderMesTabs();
+  showToast('✅ Venta registrada');
+  try{await setDoc(doc(db,'ventas',id),venta);await setDoc(doc(db,'prendas',prendaId),window.DB.prendas[prendaId]);}catch(e){}
+}
+
+window.eliminarVenta=async function(id,event){
+  event.stopPropagation();
+  const v=window.DB.ventas[id];
+  if(window.DB.prendas[v.prendaId]){window.DB.prendas[v.prendaId].vendido=Math.max(0,(window.DB.prendas[v.prendaId].vendido||0)-(v.cantidad||0));try{await setDoc(doc(db,'prendas',v.prendaId),window.DB.prendas[v.prendaId]);}catch(e){}}
+  delete window.DB.ventas[id];
+  try{await deleteDoc(doc(db,'ventas',id));}catch(e){}
+  renderVentas();renderResumen();renderInventario();renderMesTabs();
+  showToast('🗑️ Venta eliminada');
+}
+
+window.eliminarPrenda=async function(id){
+  if(!confirm('¿Eliminar esta prenda?'))return;
+  delete window.DB.prendas[id];
+  cerrarModal('modal-detalle');renderInventario();renderResumen();
+  showToast('🗑️ Prenda eliminada');
+  try{await deleteDoc(doc(db,'prendas',id));}catch(e){}
+}
+
+window.renderResumen=function(){
+  const prendas=Object.values(window.DB.prendas),ventas=Object.values(window.DB.ventas);
+  let ts=0,ag=0;prendas.forEach(p=>{const s=(p.stockInicial||0)-(p.vendido||0);ts+=s;if(s<=0)ag++;});
+  document.getElementById('stat-stock').textContent=ts;
+  document.getElementById('stat-vendido').textContent='S/ '+ventas.reduce((a,v)=>a+(v.total||0),0).toFixed(2);
+  document.getElementById('stat-ganancia').textContent='S/ '+ventas.reduce((a,v)=>a+(v.ganancia||0),0).toFixed(2);
+  document.getElementById('stat-agotados').textContent=ag;
+  const al=document.getElementById('alertas-list');
+  const alertas=prendas.filter(p=>(p.stockInicial||0)-(p.vendido||0)<=3);
+  if(!alertas.length){al.innerHTML='<div class="empty"><div class="empty-icon">✅</div><p>Todo el stock está bien</p></div>';return;}
+  al.innerHTML=alertas.map(p=>{const s=(p.stockInicial||0)-(p.vendido||0);return `<div class="item-card"><div class="item-color-dot" style="background:var(--lila-clar);display:flex;align-items:center;justify-content:center;font-size:16px">${s<=0?'❌':'⚠️'}</div><div class="item-info"><div class="item-name">${p.modelo}</div><div class="item-sub">${p.color} · Talla ${p.talla}</div></div><div class="item-stock"><div class="item-stock-num" style="color:${s<=0?'var(--rojo)':'var(--amarillo)'}">${s}</div><div class="item-stock-label">en stock</div></div></div>`;}).join('');
+}
+
+window.renderInventario=function(){
+  const q=(document.getElementById('search-inventario').value||'').toLowerCase();
+  const prendas=Object.entries(window.DB.prendas).filter(([,p])=>p.modelo.toLowerCase().includes(q));
+  const list=document.getElementById('inventario-list');
+  if(!prendas.length){list.innerHTML='<div class="empty"><div class="empty-icon">👗</div><p>No hay prendas aún.<br>Tocá + para agregar</p></div>';return;}
+  const cbg={Negro:'#424242',Blanco:'#f5f5f5',Rojo:'#ffcdd2',Azul:'#bbdefb',Verde:'#c8e6c9',Rosa:'#f8bbd0',Beige:'#f5f0e8',Gris:'#e0e0e0',Amarillo:'#fff9c4',Naranja:'#ffe0b2',Violeta:'#e1bee7',Celeste:'#b3e5fc',Marron:'#d7ccc8',Multicolor:'#f8bbd0'};
+  list.innerHTML=prendas.map(([id,p])=>{const s=(p.stockInicial||0)-(p.vendido||0);const bd=s<=0?'badge-err':s<=3?'badge-warn':'badge-ok';const bt=s<=0?'Agotado':s<=3?'Poco stock':'Disponible';return `<div class="item-card" onclick="verDetalle('${id}')"><div class="item-color-dot" style="background:${cbg[p.color]||'var(--lila-clar)'}"></div><div class="item-info"><div class="item-name">${p.modelo}</div><div class="item-sub">${p.color} · Talla ${p.talla} · S/ ${(p.precioVenta||0).toFixed(2)}</div><span class="badge ${bd}" style="margin-top:4px;display:inline-block">${bt}</span></div><div class="item-stock"><div class="item-stock-num">${s}</div><div class="item-stock-label">unidades</div></div></div>`;}).join('');
+}
+
+window.verDetalle=function(id){
+  const p=window.DB.prendas[id],s=(p.stockInicial||0)-(p.vendido||0);
+  document.getElementById('detalle-content').innerHTML=`<div class="modal-title">${p.modelo}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"><div class="stat-card"><div class="stat-label">Stock actual</div><div class="stat-val">${s}</div></div><div class="stat-card"><div class="stat-label">Vendido</div><div class="stat-val green">${p.vendido||0}</div></div><div class="stat-card"><div class="stat-label">Precio costo</div><div class="stat-val" style="font-size:16px">S/ ${(p.costo||0).toFixed(2)}</div></div><div class="stat-card"><div class="stat-label">Precio venta</div><div class="stat-val green" style="font-size:16px">S/ ${(p.precioVenta||0).toFixed(2)}</div></div></div><div class="card" style="margin-bottom:12px"><div style="font-size:13px;color:var(--text2);display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between"><span>Color</span><span class="color-tag">${p.color}</span></div><div style="display:flex;justify-content:space-between"><span>Talla</span><strong>${p.talla}</strong></div><div style="display:flex;justify-content:space-between"><span>Ganancia unit.</span><strong style="color:var(--verde)">S/ ${((p.precioVenta||0)-(p.costo||0)).toFixed(2)}</strong></div>${p.descripcion?`<div style="display:flex;justify-content:space-between"><span>Desc.</span><span>${p.descripcion}</span></div>`:''}</div></div><button class="btn btn-secondary" style="margin-bottom:8px" onclick="cerrarModal('modal-detalle');abrirModal('${id}')">✏️ Editar prenda</button><button class="btn" style="background:#FFEBEE;color:var(--rojo)" onclick="eliminarPrenda('${id}')">🗑️ Eliminar prenda</button><div style="height:8px"></div>`;
+  document.getElementById('modal-detalle').classList.add('open');
+}
+
+window.renderVentas=function(){
+  const q=(document.getElementById('search-ventas').value||'').toLowerCase();
+  const ventas=Object.entries(window.DB.ventas).filter(([,v])=>v.modelo.toLowerCase().includes(q)).sort((a,b)=>b[1].timestamp-a[1].timestamp);
+  const list=document.getElementById('ventas-list');
+  if(!ventas.length){list.innerHTML='<div class="empty"><div class="empty-icon">💰</div><p>No hay ventas aún.<br>Tocá + para registrar</p></div>';return;}
+  list.innerHTML=ventas.map(([id,v])=>`<div class="venta-card"><div class="venta-header"><div class="venta-modelo">${v.modelo}</div><div style="display:flex;align-items:center;gap:6px"><div class="venta-total">S/ ${(v.total||0).toFixed(2)}</div><button class="venta-delete" onclick="eliminarVenta('${id}',event)">🗑️</button></div></div><div class="venta-sub">${v.color} · Talla ${v.talla} · ${v.cantidad} ud. · ${v.fecha}</div>${v.cliente?`<div class="venta-sub" style="margin-top:3px">👤 ${v.cliente}</div>`:''}<div style="margin-top:6px;font-size:12px;color:var(--verde)">Ganancia: S/ ${(v.ganancia||0).toFixed(2)}</div></div>`).join('');
+}
+
+window.renderConfig=function(){
+  document.getElementById('colores-list').innerHTML=window.DB.config.colores.map(c=>`<span class="color-tag" style="display:inline-flex;align-items:center;gap:4px">${c} <button onclick="quitarColor('${c}')" style="background:none;border:none;color:var(--lila);cursor:pointer;font-size:12px;padding:0">×</button></span>`).join('');
+  document.getElementById('tallas-list').innerHTML=window.DB.config.tallas.map(t=>`<span class="color-tag" style="display:inline-flex;align-items:center;gap:4px">${t} <button onclick="quitarTalla('${t}')" style="background:none;border:none;color:var(--lila);cursor:pointer;font-size:12px;padding:0">×</button></span>`).join('');
+  document.getElementById('firebase-status').textContent=navigator.onLine?'🟢 Conectado a Firebase':'🟡 Sin conexión — modo offline';
+}
+
+window.agregarColor=async function(){const v=document.getElementById('nuevo-color').value.trim();if(!v)return;if(window.DB.config.colores.includes(v)){showToast('Ese color ya existe');return;}window.DB.config.colores.push(v);document.getElementById('nuevo-color').value='';renderConfig();showToast('✅ Color agregado');try{await setDoc(doc(db,'config','colores'),{lista:window.DB.config.colores});}catch(e){}}
+window.quitarColor=async function(c){window.DB.config.colores=window.DB.config.colores.filter(x=>x!==c);renderConfig();try{await setDoc(doc(db,'config','colores'),{lista:window.DB.config.colores});}catch(e){}}
+window.agregarTalla=async function(){const v=document.getElementById('nueva-talla').value.trim();if(!v)return;if(window.DB.config.tallas.includes(v)){showToast('Esa talla ya existe');return;}window.DB.config.tallas.push(v);document.getElementById('nueva-talla').value='';renderConfig();showToast('✅ Talla agregada');try{await setDoc(doc(db,'config','tallas'),{lista:window.DB.config.tallas});}catch(e){}}
+window.quitarTalla=async function(t){window.DB.config.tallas=window.DB.config.tallas.filter(x=>x!==t);renderConfig();try{await setDoc(doc(db,'config','tallas'),{lista:window.DB.config.tallas});}catch(e){}}
+window.sincronizar=function(){showToast('🔄 Sincronizando...');cargarDatos();}
+
+async function cargarDatos(){
+  try{
+    const[pS,vS,cS]=await Promise.all([getDocs(collection(db,'prendas')),getDocs(collection(db,'ventas')),getDocs(collection(db,'config'))]);
+    pS.forEach(d=>window.DB.prendas[d.id]=d.data());
+    vS.forEach(d=>window.DB.ventas[d.id]=d.data());
+    cS.forEach(d=>{if(d.id==='colores'&&d.data().lista)window.DB.config.colores=d.data().lista;if(d.id==='tallas'&&d.data().lista)window.DB.config.tallas=d.data().lista;});
+    renderResumen();renderInventario();renderVentas();renderMesTabs();
+    document.getElementById('syncDot').className='sync-dot';
+    showToast('✅ Datos sincronizados');
+  }catch(e){document.getElementById('syncDot').className='sync-dot offline';showToast('Trabajando sin conexión');}
+}
+
+window.addEventListener('online',()=>{document.getElementById('offlineBanner').classList.remove('show');document.getElementById('syncDot').className='sync-dot';cargarDatos();});
+window.addEventListener('offline',()=>{document.getElementById('offlineBanner').classList.add('show');document.getElementById('syncDot').className='sync-dot offline';});
+document.querySelectorAll('.modal-backdrop').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+cargarDatos();
+showPage('resumen');
+</script>
+</body>
+</html>
